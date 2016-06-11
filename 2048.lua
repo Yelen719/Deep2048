@@ -1,27 +1,44 @@
--- require('torch')
+local two048Lua = {}
 
-score = 0;
-highestTile = 0;
+two048Lua.score = 0;
+two048Lua.highestTile = 0;
+two048Lua.grid = {};
 
-local function initGrid(m,n)
-    local grid = {}
-    for i=1,m do
-        if not grid[i] then
-            grid[i] = {}
-        end
-        for j=1,n do
-            grid[i][j] = 0
-        end
-    end
-    return grid
+function two048Lua.getScore()
+    return two048Lua.score;
 end
 
-local function printGrid(grid)
-    local celllen = 8  -- 每个格子占用字符数
+function two048Lua.getGrid()
+    return two048Lua.grid;
+end
+
+function two048Lua.getHighestTile()
+    return two048Lua.highestTile
+end
+
+function two048Lua.initGrid(m,n)
+    m = m or 4;
+    n = n or 4;
+    two048Lua.score = 0;
+    two048Lua.highestTile = 0;
+    for i=1,m do
+        if not two048Lua.grid[i] then
+            two048Lua.grid[i] = {}
+        end
+        for j=1,n do
+            two048Lua.grid[i][j] = 0
+        end
+    end
+    two048Lua.randomNum(two048Lua.grid);
+    two048Lua.randomNum(two048Lua.grid);
+end
+
+function two048Lua.printGrid()
+    local celllen = 8
     local gridStrLines = {}
     table.insert(gridStrLines,"-------------------------------------")
-    for i,row in ipairs(grid) do
-        local line = {} 
+    for i,row in ipairs(two048Lua.grid) do
+        local line = {}
         for _,num in ipairs(row) do
             if num==0 then
                 local pres = ""
@@ -57,223 +74,233 @@ local function printGrid(grid)
     print(gridStr)
 end
 
-local function getRandomZeroPos(grid)
-    local m = #grid
-    local n = #grid[1]
+function two048Lua.getRandomZeroPos()
+    local m = #two048Lua.grid
+    local n = #two048Lua.grid[1]
     local zeros = {}
     for i=1,m do
         for j=1,n do
-            if grid[i][j]==0 then
+            if two048Lua.grid[i][j]==0 then
                 table.insert(zeros,{i=i,j=j})
             end
         end
     end
     if #zeros>0 then
+        math.randomseed(os.time());
         local r = math.random(1,#zeros)
         return zeros[r].i,zeros[r].j
     end
 end
 
-local function randomNum(grid)
-    local i,j = getRandomZeroPos(grid)
+function two048Lua.randomNum()
+    local i,j = two048Lua.getRandomZeroPos(two048Lua.grid)
     if i and j then
+        math.randomseed(os.time());
         local r = math.random()
         if r<0.9 then
-            grid[i][j] = 2
+            two048Lua.grid[i][j] = 2
         else
-            grid[i][j] = 4
+            two048Lua.grid[i][j] = 4
         end
-        if grid[i][j] > highestTile then
-            highestTile = grid[i][j]
+        if two048Lua.grid[i][j] > two048Lua.highestTile then
+            two048Lua.highestTile = two048Lua.grid[i][j]
         end
         return i,j
     end
 end
 
-local function moveLeft(grid)
-    local oldScore = score
+function two048Lua.moveLeft()
+    local oldScore = two048Lua.score
     local canMove = false
-    local m = #grid
-    local n = #grid[1]
+    local m = #two048Lua.grid
+    local n = #two048Lua.grid[1]
     for i=1,m do
         local line = {}
         for j=1,n do
-            if grid[i][j]~=0 then
-                table.insert(line,grid[i][j])
+            if two048Lua.grid[i][j]~=0 then
+                table.insert(line,two048Lua.grid[i][j])
             end
         end
         local k=#line
         for j=1,n do
             if j<=k then
-                if grid[i][j] ~= line[j] then
+                if two048Lua.grid[i][j] ~= line[j] then
                     canMove = true
                 end
-                grid[i][j] = line[j]
+                two048Lua.grid[i][j] = line[j]
             else
-                grid[i][j] = 0
+                two048Lua.grid[i][j] = 0
             end
         end
         for j=1,k-1 do
-            if grid[i][j]==grid[i][j+1] then
-                grid[i][j+1] = grid[i][j] + grid[i][j+1]
-                if grid[i][j+1] > highestTile then
-                    highestTile = grid[i][j+1]
+            if two048Lua.grid[i][j]==two048Lua.grid[i][j+1] then
+                two048Lua.grid[i][j+1] = two048Lua.grid[i][j] + two048Lua.grid[i][j+1]
+                if two048Lua.grid[i][j+1] > two048Lua.highestTile then
+                    two048Lua.highestTile = two048Lua.grid[i][j+1]
                 end
-                score = score + 2 * grid[i][j]
+                two048Lua.score = two048Lua.score + 2 * two048Lua.grid[i][j]
                 for x=j,n-1 do
-                    grid[i][x] = grid[i][x+1]
+                    two048Lua.grid[i][x] = two048Lua.grid[i][x+1]
                 end
-                grid[i][n] = 0
-            end             
+                two048Lua.grid[i][n] = 0
+            end
         end
     end
-    if oldScore ~= score then
+    if oldScore ~= two048Lua.score then
         canMove = true
     end
-    return canMove
+    if canMove == true then
+        two048Lua.randomNum();
+    end
 end
 
-local function moveRight(grid)
-    local oldScore = score
+function two048Lua.moveRight()
+    local oldScore = two048Lua.score
     local canMove = false
-    local m = #grid
-    local n = #grid[1]
+    local m = #two048Lua.grid
+    local n = #two048Lua.grid[1]
     for i=1,m do
         local line = {}
         for j=n,1,-1 do
-            if grid[i][j]~=0 then
-                table.insert(line,grid[i][j])
+            if two048Lua.grid[i][j]~=0 then
+                table.insert(line,two048Lua.grid[i][j])
             end
         end
         local k = #line
         for j=n,1,-1 do
             if n-j+1<=k then
-                if grid[i][j] ~= line[n-j+1] then
+                if two048Lua.grid[i][j] ~= line[n-j+1] then
                     canMove = true
                 end
-                grid[i][j] = line[n-j+1]
+                two048Lua.grid[i][j] = line[n-j+1]
             else
-                grid[i][j] = 0
+                two048Lua.grid[i][j] = 0
             end
         end
         for j=n,n-k+2,-1 do
-            if grid[i][j]==grid[i][j-1] and grid[i][j] ~= 0 then
-                grid[i][j-1] = grid[i][j] + grid[i][j-1]
-                if grid[i][j-1] > highestTile then
-                    highestTile = grid[i][j-1]
+            if two048Lua.grid[i][j]==two048Lua.grid[i][j-1] and two048Lua.grid[i][j] ~= 0 then
+                two048Lua.grid[i][j-1] = two048Lua.grid[i][j] + two048Lua.grid[i][j-1]
+                if two048Lua.grid[i][j-1] > two048Lua.highestTile then
+                    two048Lua.highestTile = two048Lua.grid[i][j-1]
                 end
-                score = score + 2 * grid[i][j]
+                two048Lua.score = two048Lua.score + 2 * two048Lua.grid[i][j]
                 for x=j,2,-1 do
-                    grid[i][x] = grid[i][x-1]
+                    two048Lua.grid[i][x] = two048Lua.grid[i][x-1]
                 end
-                grid[i][1] = 0
+                two048Lua.grid[i][1] = 0
             end
         end
     end
-    if oldScore ~= score then
+    if oldScore ~= two048Lua.score then
         canMove = true
     end
-    return canMove
+    if canMove == true then
+        two048Lua.randomNum();
+    end
 end
 
 
-local function moveUp(grid)
-    local oldScore = score
+function two048Lua.moveUp()
+    local oldScore = two048Lua.score
     local canMove = false
-    local m = #grid
-    local n = #grid[1]
+    local m = #two048Lua.grid
+    local n = #two048Lua.grid[1]
     for j=1,n do
         local line = {}
         for i=1,m do
-            if grid[i][j]~=0 then
-                table.insert(line,grid[i][j])
+            if two048Lua.grid[i][j]~=0 then
+                table.insert(line,two048Lua.grid[i][j])
             end
         end
         local k = #line
         for i=1,m do
             if i<=k then
-                if grid[i][j] ~= line[i] then
+                if two048Lua.grid[i][j] ~= line[i] then
                     canMove = true
                 end
-                grid[i][j] = line[i]
+                two048Lua.grid[i][j] = line[i]
             else
-                grid[i][j] = 0
+                two048Lua.grid[i][j] = 0
             end
         end
         for i=1,k-1 do
-            if grid[i][j]==grid[i+1][j] and grid[i][j] ~= 0 then
-                grid[i+1][j] = grid[i][j] + grid[i+1][j]
-                if grid[i+1][j] > highestTile then
-                    highestTile = grid[i+1][j]
+            if two048Lua.grid[i][j] == two048Lua.grid[i+1][j] and two048Lua.grid[i][j] ~= 0 then
+                two048Lua.grid[i+1][j] = two048Lua.grid[i][j] + two048Lua.grid[i+1][j]
+                if two048Lua.grid[i+1][j] > two048Lua.highestTile then
+                    two048Lua.highestTile = two048Lua.grid[i+1][j]
                 end
-                score = score + 2 * grid[i][j]
+                two048Lua.score = two048Lua.score + 2 * two048Lua.grid[i][j]
                 for x=i,m-1 do
-                    grid[x][j] = grid[x+1][j]
+                    two048Lua.grid[x][j] = two048Lua.grid[x+1][j]
                 end
-                grid[m][j] = 0
+                two048Lua.grid[m][j] = 0
             end             
         end
     end
-    if oldScore ~= score then
+    if oldScore ~= two048Lua.score then
         canMove = true
     end
-    return canMove
+    if canMove == true then
+        two048Lua.randomNum();
+    end
 end
 
-local function moveDown(grid)
-    local oldScore = score
+function two048Lua.moveDown()
+    local oldScore = two048Lua.score
     local canMove = false
-    local m = #grid
-    local n = #grid[1]
+    local m = #two048Lua.grid
+    local n = #two048Lua.grid[1]
     for j=1,n do
         local line = {}
         for i=m,1,-1 do
-            if grid[i][j]~=0 then
-                table.insert(line,grid[i][j])
+            if two048Lua.grid[i][j]~=0 then
+                table.insert(line,two048Lua.grid[i][j])
             end
         end
         local k = #line
         for i=m,1,-1 do
             if m-i+1<=k then
-                if grid[i][j] ~= line[m-i+1] then
+                if two048Lua.grid[i][j] ~= line[m-i+1] then
                     canMove = true
                 end
-                grid[i][j] = line[m-i+1]
+                two048Lua.grid[i][j] = line[m-i+1]
             else
-                grid[i][j] = 0
+                two048Lua.grid[i][j] = 0
             end
         end
         for i=m,m-k+2,-1 do
-            if grid[i][j]==grid[i-1][j] then
-                grid[i-1][j] = grid[i][j] + grid[i-1][j]
-                if grid[i-1][j] > highestTile then
-                    highestTile = grid[i-1][j]
+            if two048Lua.grid[i][j]==two048Lua.grid[i-1][j] then
+                two048Lua.grid[i-1][j] = two048Lua.grid[i][j] + two048Lua.grid[i-1][j]
+                if two048Lua.grid[i-1][j] > two048Lua.highestTile then
+                    two048Lua.highestTile = two048Lua.grid[i-1][j]
                 end
-                score = score + 2 * grid[i][j]
+                two048Lua.score = two048Lua.score + 2 * two048Lua.grid[i][j]
                 for x=i,2,-1 do
-                    grid[x][j] = grid[x-1][j]
+                    two048Lua.grid[x][j] = two048Lua.grid[x-1][j]
                 end
-                grid[1][j] = 0
+                two048Lua.grid[1][j] = 0
             end
         end
     end
-    if oldScore ~= score then
+    if oldScore ~= two048Lua.score then
         canMove = true
     end
-    return canMove
+    if canMove == true then
+        two048Lua.randomNum();
+    end
 end
 
-local function isOver(grid)
-    local m = #grid
-    local n = #grid[1]
+function two048Lua.isOver()
+    local m = #two048Lua.grid
+    local n = #two048Lua.grid[1]
     for i=1,m do
         for j=1,n do
-            if grid[i][j]==0 then
+            if two048Lua.grid[i][j]==0 then
                 return true
             end
             if (i<m and j<n)
-            and (grid[i][j]==grid[i][j+1]
-                or grid[i][j]==grid[i+1][j]) then
+            and (two048Lua.grid[i][j]==two048Lua.grid[i][j+1]
+                or two048Lua.grid[i][j]==two048Lua.grid[i+1][j]) then
                 return true
             end
         end
@@ -281,50 +308,58 @@ local function isOver(grid)
     return false
 end
 
-local function main()
-    math.randomseed(os.time())
-    local grid = initGrid(4,4)
-    randomNum(grid)
-    randomNum(grid)
-    print("SCORE: " .. score .. " HIGHEST TILE: " .. highestTile)
-    printGrid(grid)
+function two048Lua.restart()
+    two048Lua.initGrid(4,4);
+    print("two048Lua.score: " .. two048Lua.score .. " HIGHEST TILE: " .. two048Lua.highestTile);
+    two048Lua.printGrid();
+end
+
+function two048Lua.silentRestart()
+    two048Lua.initGrid(4,4);
+end
+
+function two048Lua.move(action)
+    if action == "u" then
+        two048Lua.moveUp();
+    elseif action == "d"  then
+        two048Lua.moveDown();
+    elseif action == "l" then
+        two048Lua.moveLeft();
+    elseif action == "r" then
+        two048Lua.moveRight();
+    end
+end
+
+function two048Lua.run()
+    two048Lua.initGrid(4,4);
+    print("two048Lua.score: " .. two048Lua.score .. " HIGHEST TILE: " .. two048Lua.highestTile);
+    two048Lua.printGrid();
     io.write("next step 'a'[←],'w'[↑],'s'[↓],'d'[→],'q'[exit] >> ")
     local input = io.read()
-    while input~="q" and isOver(grid) do
+    while input~="q" and two048Lua.isOver() do
         if input=="a" or input=="w" or input=="s" or input=="d" then
             local moved = false
             if input=="a" then
-                moved = moveLeft(grid)
+                two048Lua.move("l");
             elseif input=="w" then
-                moved = moveUp(grid)
+                two048Lua.move("u");
             elseif input=="s" then
-                moved = moveDown(grid)
+                two048Lua.move("d");
             elseif input=="d" then
-                moved = moveRight(grid)
+                two048Lua.move("r");
             end
-            if moved == true then
-                randomNum(grid)
-            end
-            print("SCORE: " .. score .. " HIGHEST TILE: " .. highestTile)
-            printGrid(grid)
-            -- print(torch.Tensor(grid))
+            print("two048Lua.score: " .. two048Lua.score .. " HIGHEST TILE: " .. two048Lua.highestTile)
+            two048Lua.printGrid();
+            -- print(torch.Tensor(two048Lua.grid))
         elseif input == "r" then
-            score = 0
-            highestTile = 0
-            grid = initGrid(4, 4)
-            math.randomseed(os.time())
-            randomNum(grid)
-            randomNum(grid)
-            print("SCORE: " .. score .. " HIGHEST TILE: " .. highestTile)
-            printGrid(grid)
+            two048Lua.restart();
         else
             print("error input. please input 'a'[←] or 'w'[↑] or 's'[↓] or 'd'[→] or 'q'[exit]")
         end
         io.write("next step 'a'[←],'w'[↑],'s'[↓],'d'[→],'q'[exit] >> ")
         input = io.read()
     end
-    print("GAME OVER! " .. "Your Score is: " .. score)
+    print("GAME OVER! " .. "Your score is: " .. two048Lua.score)
 end
 
-main()
-
+return two048Lua
