@@ -350,6 +350,7 @@ function two048Lua.silentRestart()
 end
 
 function two048Lua.move(action)
+    two048Lua.oldScore = two048Lua.score;
     if action == "u" then
         two048Lua.moveUp();
     elseif action == "d"  then
@@ -373,7 +374,6 @@ function two048Lua.run()
     io.write("next step 'a'[←],'w'[↑],'s'[↓],'d'[→],'q'[exit] >> ")
     local input = io.read()
     while input~="q" and not two048Lua.isOver() do
-        two048Lua.oldScore = two048Lua.score;
         if input=="a" or input=="w" or input=="s" or input=="d" then
             local moved = false
             if input=="a" then
