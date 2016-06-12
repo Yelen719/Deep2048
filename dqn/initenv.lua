@@ -111,11 +111,18 @@ function setup(_opt)
     local opt = torchSetup(_opt)
 
     -- load training framework and environment
-    local framework = require(opt.framework)
-    assert(framework)
-
-    local gameEnv = framework.GameEnvironment(opt)
-    local gameActions = gameEnv:getActions()
+    -- Nan Yang: Load the lua wrapper for the game
+    -- local framework = require(opt.framework)
+    -- 
+    ------ Nan Yang ------
+    -- What are the gameEnv?
+    -- What are the gameActions?
+    -- try it by print
+    -- local gameEnv = framework.GameEnvironment(opt)
+    local gameEnv = require '../two048Lua.lua';
+    assert(gameEnv)
+    -- getActions: return self.env:actions():storage():totable()
+    local gameActions = gameEnv.getActions()
 
     -- agent options
     _opt.agent_params.actions   = gameActions
@@ -126,6 +133,9 @@ function setup(_opt)
     end
     _opt.agent_params.verbose = _opt.verbose
     if not _opt.agent_params.state_dim then
+        ------ Nan Yang ------
+        -- What is nObsFeature? seems important
+        -- Or we can give it a state_dim?
         _opt.agent_params.state_dim = gameEnv:nObsFeature()
     end
 
@@ -138,6 +148,13 @@ function setup(_opt)
         end
     end
 
+    ------ Nan Yang ------
+    -- local framework = require(opt.framework)
+    -- gameEnv = framework.GameEnvironment(opt)
+    -- gameActions = gameEnv:getActions()
+    -- dqn = {}
+    -- agent = dqn[_opt.agent](_opt.agent_params)
+    -- opt = torch options
     return gameEnv, gameActions, agent, opt
 end
 

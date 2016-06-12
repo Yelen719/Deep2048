@@ -1,8 +1,18 @@
+if not torch then
+    require 'torch'
+end
+
 local two048Lua = {}
 
+two048Lua.oldScore = 0;
 two048Lua.score = 0;
 two048Lua.highestTile = 0;
 two048Lua.grid = {};
+two048Lua.actions = {"u", "d", "l", "r"};
+
+function two048Lua.getActions()
+    return two048Lua.actions;
+end
 
 function two048Lua.getScore()
     return two048Lua.score;
@@ -14,6 +24,13 @@ end
 
 function two048Lua.getHighestTile()
     return two048Lua.highestTile
+end
+
+function two048Lua.getState()
+    local screen = two048Lua.getGrid();
+    local reward = two048Lua.score - two048Lua.oldScore;
+    local terminal = two048Lua.isOver();
+    return torch.Tensor(screen), reward, terminal;
 end
 
 function two048Lua.initGrid(m,n)
@@ -87,7 +104,7 @@ function two048Lua.getRandomZeroPos()
     end
     if #zeros>0 then
         math.randomseed(os.time());
-        local r = math.random(1,#zeros)
+        local r = torch.random(1,#zeros)
         return zeros[r].i,zeros[r].j
     end
 end
@@ -96,8 +113,8 @@ function two048Lua.randomNum()
     local i,j = two048Lua.getRandomZeroPos(two048Lua.grid)
     if i and j then
         math.randomseed(os.time());
-        local r = math.random()
-        if r<0.9 then
+        local r = torch.random(1,100)
+        if r<90 then
             two048Lua.grid[i][j] = 2
         else
             two048Lua.grid[i][j] = 4
@@ -296,22 +313,36 @@ function two048Lua.isOver()
     for i=1,m do
         for j=1,n do
             if two048Lua.grid[i][j]==0 then
-                return true
+                return false
             end
-            if (i<m and j<n)
-            and (two048Lua.grid[i][j]==two048Lua.grid[i][j+1]
-                or two048Lua.grid[i][j]==two048Lua.grid[i+1][j]) then
-                return true
+            -- if (i<m and j<n)
+            -- and (two048Lua.grid[i][j]==two048Lua.grid[i][j+1]
+            --     or two048Lua.grid[i][j]==two048Lua.grid[i+1][j]) then
+            --     return true
+            -- end
+        end
+    end
+    for i = 1,m do
+        for j = 1, n - 1 do
+            if two048Lua.grid[i][j] == two048Lua.grid[i][j+1] then
+                return false;
             end
         end
     end
-    return false
+    for j = 1, n do
+        for i = 1, m - 1 do
+            if two048Lua.grid[i][j] == two048Lua.grid[i+1][j] then
+                return false;
+            end
+        end
+    end
+    return true;
 end
 
 function two048Lua.restart()
     two048Lua.initGrid(4,4);
-    print("two048Lua.score: " .. two048Lua.score .. " HIGHEST TILE: " .. two048Lua.highestTile);
-    two048Lua.printGrid();
+    -- print("two048Lua.score: " .. two048Lua.score .. " HIGHEST TILE: " .. two048Lua.highestTile);
+    -- two048Lua.printGrid();
 end
 
 function two048Lua.silentRestart()
@@ -330,13 +361,19 @@ function two048Lua.move(action)
     end
 end
 
+function two048Lua.step(action)
+    two048Lua.move(action);
+    return two048Lua.getState()
+end
+
 function two048Lua.run()
-    two048Lua.initGrid(4,4);
+    -- two048Lua.initGrid(4,4);
     print("two048Lua.score: " .. two048Lua.score .. " HIGHEST TILE: " .. two048Lua.highestTile);
     two048Lua.printGrid();
     io.write("next step 'a'[←],'w'[↑],'s'[↓],'d'[→],'q'[exit] >> ")
     local input = io.read()
-    while input~="q" and two048Lua.isOver() do
+    while input~="q" and not two048Lua.isOver() do
+        two048Lua.oldScore = two048Lua.score;
         if input=="a" or input=="w" or input=="s" or input=="d" then
             local moved = false
             if input=="a" then
@@ -348,8 +385,11 @@ function two048Lua.run()
             elseif input=="d" then
                 two048Lua.move("r");
             end
-            print("two048Lua.score: " .. two048Lua.score .. " HIGHEST TILE: " .. two048Lua.highestTile)
+            print("Score: " .. two048Lua.score .. " Reward:  " .. two048Lua.score - two048Lua.oldScore .. " HIGHEST TILE: " .. two048Lua.highestTile)
             two048Lua.printGrid();
+            if two048Lua.isOver() then 
+                break;
+            end
             -- print(torch.Tensor(two048Lua.grid))
         elseif input == "r" then
             two048Lua.restart();

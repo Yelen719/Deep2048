@@ -52,7 +52,7 @@ function nql:__init(args)
     self.gpu            = args.gpu
 
     self.ncols          = args.ncols or 1  -- number of color channels in input
-    self.input_dims     = args.input_dims or {self.hist_len*self.ncols, 84, 84}
+    self.input_dims     = args.input_dims or {self.hist_len*self.ncols, 4, 4}
     self.preproc        = args.preproc  -- name of preprocessing network
     self.histType       = args.histType or "linear"  -- history type to use
     self.histSpacing    = args.histSpacing or 1
@@ -95,16 +95,16 @@ function nql:__init(args)
     end
 
     -- Load preprocessing network.
-    if not (type(self.preproc == 'string')) then
-        error('The preprocessing is not a string')
-    end
-    msg, err = pcall(require, self.preproc)
-    if not msg then
-        error("Error loading preprocessing net")
-    end
-    self.preproc = err
-    self.preproc = self:preproc()
-    self.preproc:float()
+    -- if not (type(self.preproc == 'string')) then
+    --     error('The preprocessing is not a string')
+    -- end
+    -- msg, err = pcall(require, self.preproc)
+    -- if not msg then
+    --     error("Error loading preprocessing net")
+    -- end
+    -- self.preproc = err
+    -- self.preproc = self:preproc()
+    -- self.preproc:float()
 
     if self.gpu and self.gpu >= 0 then
         self.network:cuda()
@@ -298,7 +298,8 @@ end
 
 function nql:perceive(reward, rawstate, terminal, testing, testing_ep)
     -- Preprocess state (will be set to nil if terminal)
-    local state = self:preprocess(rawstate):float()
+    -- local state = self:preprocess(rawstate):float()
+    local state = rawstate;
     local curState
 
     if self.max_reward then
