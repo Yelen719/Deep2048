@@ -20,7 +20,7 @@ function scale:forward(x)
         x = x[1]
     end
 
-    x = image.rgb2y(x)
+    -- x = image.rgb2y(x)
     x = image.scale(x, self.width, self.height, 'bilinear')
     return x
 end

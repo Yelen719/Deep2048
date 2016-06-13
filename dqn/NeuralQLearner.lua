@@ -95,16 +95,16 @@ function nql:__init(args)
     end
 
     -- Load preprocessing network.
-    -- if not (type(self.preproc == 'string')) then
-    --     error('The preprocessing is not a string')
-    -- end
-    -- msg, err = pcall(require, self.preproc)
-    -- if not msg then
-    --     error("Error loading preprocessing net")
-    -- end
-    -- self.preproc = err
-    -- self.preproc = self:preproc()
-    -- self.preproc:float()
+    if not (type(self.preproc == 'string')) then
+        error('The preprocessing is not a string')
+    end
+    msg, err = pcall(require, self.preproc)
+    if not msg then
+        error("Error loading preprocessing net")
+    end
+    self.preproc = err
+    self.preproc = self:preproc()
+    self.preproc:float()
 
     if self.gpu and self.gpu >= 0 then
         self.network:cuda()
@@ -298,7 +298,7 @@ end
 
 function nql:perceive(reward, rawstate, terminal, testing, testing_ep)
     -- Preprocess state (will be set to nil if terminal)
-    -- local state = self:preprocess(rawstate):float()
+    local state = self:preprocess(rawstate):float()
     local state = rawstate;
     local curState
 

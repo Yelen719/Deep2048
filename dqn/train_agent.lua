@@ -130,31 +130,27 @@ while step < opt.steps do
         nrewards = 0
         nepisodes = 0
         episode_reward = 0
-
+        highest_reward = 0;
         local eval_time = sys.clock()
         for estep=1,opt.eval_steps do
             -- 0.05 is used for egreedy
             local action_index = agent:perceive(reward, screen, terminal, true, 0.05)
-            -- print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-            -- print(action_index);
             -- Play game in test mode (episodes don't end when losing a life)
             screen, reward, terminal = game_env.step(game_actions[action_index])
             -- display screen
             -- win = image.display({image=screen, win=win})
-            -- print(screen);
             if estep%1000 == 0 then collectgarbage() end
-
             -- record every reward
             episode_reward = episode_reward + reward
-            -- print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-            -- print(episode_reward);
             if reward ~= 0 then
                nrewards = nrewards + 1
             end
 
             if terminal then
                 total_reward = total_reward + episode_reward
-                -- print(total_reward);
+                if episode_reward > highest_reward then
+                    highest_reward = episode_reward;
+                end
                 episode_reward = 0
                 nepisodes = nepisodes + 1
                 --screen, reward, terminal = game_env:nextRandomGame()
@@ -191,10 +187,10 @@ while step < opt.steps do
         local training_rate = opt.actrep*opt.eval_freq/time_dif
 
         print(string.format(
-            '\nSteps: %d (frames: %d), reward: %.2f, epsilon: %.2f, lr: %G, ' ..
+            '\nSteps: %d (frames: %d), reward: %.2f, higheset reward: %d, epsilon: %.2f, lr: %G, ' ..
             'training time: %ds, training rate: %dfps, testing time: %ds, ' ..
             'testing rate: %dfps,  num. ep.: %d,  num. rewards: %d',
-            step, step*opt.actrep, total_reward, agent.ep, agent.lr, time_dif,
+            step, step*opt.actrep, total_reward, highest_reward, agent.ep, agent.lr, time_dif,
             training_rate, eval_time, opt.actrep*opt.eval_steps/eval_time,
             nepisodes, nrewards))
     end
