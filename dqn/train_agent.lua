@@ -131,6 +131,7 @@ while step < opt.steps do
         nepisodes = 0
         episode_reward = 0
         highest_reward = 0;
+		best_grid = torch.Tensor(4,4);
         local eval_time = sys.clock()
         for estep=1,opt.eval_steps do
             -- 0.05 is used for egreedy
@@ -150,6 +151,7 @@ while step < opt.steps do
                 total_reward = total_reward + episode_reward
                 if episode_reward > highest_reward then
                     highest_reward = episode_reward;
+					best_grid = screen;
                 end
                 episode_reward = 0
                 nepisodes = nepisodes + 1
@@ -193,6 +195,7 @@ while step < opt.steps do
             step, step*opt.actrep, total_reward, highest_reward, agent.ep, agent.lr, time_dif,
             training_rate, eval_time, opt.actrep*opt.eval_steps/eval_time,
             nepisodes, nrewards))
+		print(best_grid);
     end
 
     if step % opt.save_freq == 0 or step == opt.steps then
