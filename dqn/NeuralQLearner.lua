@@ -61,32 +61,35 @@ function nql:__init(args)
 
     self.transition_params = args.transition_params or {}
 
-    self.network    = args.network or self:createNetwork()
+    -- self.network    = args.network or self:createNetwork()
+    self.network    = self:createNetwork()
 
     -- check whether there is a network file
-    local network_function
-    if not (type(self.network) == 'string') then
-        error("The type of the network provided in NeuralQLearner" ..
-              " is not a string!")
-    end
+    -- local network_function
+    -- if not (type(self.network) == 'string') then
+    --     error("The type of the network provided in NeuralQLearner" ..
+    --           " is not a string!")
+    -- end
 
-    local msg, err = pcall(require, self.network)
-    if not msg then
-        -- try to load saved agent
-        local err_msg, exp = pcall(torch.load, self.network)
-        if not err_msg then
-            error("Could not find network file ")
-        end
-        if self.best and exp.best_model then
-            self.network = exp.best_model
-        else
-            self.network = exp.model
-        end
-    else
-        print('Creating Agent Network from ' .. self.network)
-        self.network = err
-        self.network = self:network()
-    end
+    -- local msg, err = pcall(require, self.network)
+    -- if not msg then
+    --     -- try to load saved agent
+    --     local err_msg, exp = pcall(torch.load, self.network)
+    --     if not err_msg then
+    --         error("Could not find network file ")
+    --     end
+    --     if self.best and exp.best_model then
+    --         self.network = exp.best_model
+    --     else
+    --         self.network = exp.model
+    --     end
+    -- else
+    --    print('Creating Agent Network from ' .. self.network)
+    --    self.network = err
+    --    self.network = self:network()
+    -- end
+	
+	print(self.network)
 
     if self.gpu and self.gpu >= 0 then
         self.network:cuda()
