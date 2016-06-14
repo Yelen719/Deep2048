@@ -221,6 +221,7 @@ while step < opt.steps do
                                 td_history = td_history,
                                 qmax_history = qmax_history,
                                 arguments=opt})
+		]]
         if opt.saveNetworkParams then
             local nets = {network=w:clone():float()}
             torch.save(filename..'.params.t7', nets, 'ascii')

@@ -61,33 +61,33 @@ function nql:__init(args)
 
     self.transition_params = args.transition_params or {}
 
-    -- self.network    = args.network or self:createNetwork()
-    self.network    = self:createNetwork()
+    self.network    = args.network or self:createNetwork()
+    -- self.network    = self:createNetwork()
 
-    -- check whether there is a network file
-    -- local network_function
-    -- if not (type(self.network) == 'string') then
-    --     error("The type of the network provided in NeuralQLearner" ..
-    --           " is not a string!")
-    -- end
+    check whether there is a network file
+    local network_function
+    if not (type(self.network) == 'string') then
+        error("The type of the network provided in NeuralQLearner" ..
+              " is not a string!")
+    end
 
-    -- local msg, err = pcall(require, self.network)
-    -- if not msg then
-    --     -- try to load saved agent
-    --     local err_msg, exp = pcall(torch.load, self.network)
-    --     if not err_msg then
-    --         error("Could not find network file ")
-    --     end
-    --     if self.best and exp.best_model then
-    --         self.network = exp.best_model
-    --     else
-    --         self.network = exp.model
-    --     end
-    -- else
-    --    print('Creating Agent Network from ' .. self.network)
-    --    self.network = err
-    --    self.network = self:network()
-    -- end
+    local msg, err = pcall(require, self.network)
+    if not msg then
+        -- try to load saved agent
+        local err_msg, exp = pcall(torch.load, self.network)
+        if not err_msg then
+            error("Could not find network file ")
+        end
+        if self.best and exp.best_model then
+            self.network = exp.best_model
+        else
+            self.network = exp.model
+        end
+    else
+       print('Creating Agent Network from ' .. self.network)
+       self.network = err
+       self.network = self:network()
+    end
 	
 	print(self.network)
 
@@ -416,14 +416,14 @@ end
 
 
 function nql:createNetwork()
-    local n_hid = 128
+    local n_hid = 64
     local mlp = nn.Sequential()
     mlp:add(nn.Reshape(self.hist_len*self.ncols*self.state_dim))
     mlp:add(nn.Linear(self.hist_len*self.ncols*self.state_dim, n_hid))
     mlp:add(nn.Rectifier())
-    mlp:add(nn.Linear(n_hid, n_hid))
+    mlp:add(nn.Linear(n_hid, n_hid * 2))
     mlp:add(nn.Rectifier())
-    mlp:add(nn.Linear(n_hid, self.n_actions))
+    mlp:add(nn.Linear(n_hid * 2, self.n_actions))
 
     return mlp
 end
