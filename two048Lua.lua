@@ -46,9 +46,12 @@ end
 function two048Lua.getState()
     local screen = two048Lua.getGrid();
     local reward = two048Lua.score - two048Lua.oldScore + two048Lua.stateValue - two048Lua.oldStateValue;
+    if reward == 0 then
+        reward = -100
+    end
     local terminal = two048Lua.isOver();
     local score = two048Lua.score - two048Lua.oldScore
-    --local reward = score
+    -- local reward = score
     return torch.Tensor(screen), reward, terminal, score;
 end
 

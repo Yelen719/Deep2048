@@ -310,7 +310,6 @@ function nql:perceive(reward, rawstate, terminal, testing, testing_ep)
 
     if self.max_reward then
        reward = math.min(reward, self.max_reward)
-	   print("dfsafa");
     end
     if self.min_reward then
         reward = math.max(reward, self.min_reward)
@@ -420,25 +419,25 @@ end
 
 
 function nql:createNetwork()
-    local n_hid = 64
+    local n_hid = 128 
     local mlp = nn.Sequential()
     mlp:add(nn.Reshape(self.hist_len*self.ncols*self.state_dim))
     mlp:add(nn.Linear(self.hist_len*self.ncols*self.state_dim, n_hid))
     mlp:add(nn.Rectifier())
-    mlp:add(nn.Linear(n_hid, n_hid * 2))
+    mlp:add(nn.Linear(n_hid, n_hid * 2)) -- 32 -> 64
     mlp:add(nn.Rectifier())
-	mlp:add(nn.Linear(n_hid * 2, n_hid * 4))
-	mlp:add(nn.Rectifier())
+    mlp:add(nn.Linear(n_hid * 2, n_hid * 4)) -- 64 -> 128
+    mlp:add(nn.Rectifier())
     local valStream = nn.Sequential()
-    valStream:add(nn.Linear(n_hid * 4, n_hid * 8))
+    valStream:add(nn.Linear(n_hid * 4, n_hid * 4))
     valStream:add(nn.Rectifier())
-    valStream:add(nn.Linear(n_hid * 8, 1)) -- Predicts value for state
+    valStream:add(nn.Linear(n_hid * 4, 1)) -- Predicts value for state
 
     -- Advantage approximator A^(s, a)
     local advStream = nn.Sequential()
-    advStream:add(nn.Linear(n_hid * 4, n_hid * 8))
+    advStream:add(nn.Linear(n_hid * 4, n_hid * 4))
     advStream:add(nn.Rectifier())
-    advStream:add(nn.Linear(n_hid * 8, 4)) -- Predicts action-conditional advantage
+    advStream:add(nn.Linear(n_hid * 4, 4)) -- Predicts action-conditional advantage
 
     -- Streams container
     local streams = nn.ConcatTable()
@@ -449,10 +448,6 @@ function nql:createNetwork()
     mlp:add(streams)
     -- Add dueling streams aggregator module
     mlp:add(DuelAggregator(4))
- --    mlp:add(nn.Linear(n_hid * 4, n_hid * 8))
-	-- mlp:add(nn.Rectifier())
- --    mlp:add(nn.Linear(n_hid * 8, self.n_actions))
-
     return mlp
 end
 
@@ -478,6 +473,6 @@ end
 
 
 function nql:report()
-    print(get_weight_norms(self.network))
-    print(get_grad_norms(self.network))
+    -- print(get_weight_norms(self.network))
+    -- print(get_grad_norms(self.network))
 end

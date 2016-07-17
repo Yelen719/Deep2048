@@ -2,6 +2,10 @@
 Copyright (c) 2014 Google Inc.
 See LICENSE file for full terms of limited license.
 ]]
+require 'optim'
+require 'gnuplot'
+logger = optim.Logger('score_2.txt')
+gnuplot.setterm("png")
 
 if not dqn then
     require "initenv"
@@ -56,7 +60,6 @@ local opt = cmd:parse(arg)
 -- agent = dqn[_opt.agent](_opt.agent_params)
 -- opt = torch options
 local game_env, game_actions, agent, opt = setup(opt)
-print(game_actions);
 -- override print to always flush the output
 local old_print = print
 local print = function(...)
@@ -203,6 +206,11 @@ while step < opt.steps do
             step, step*opt.actrep, total_score, highest_score, agent.ep, agent.lr, time_dif,
             training_rate, eval_time, opt.actrep*opt.eval_steps/eval_time,
             nepisodes, nrewards))
+	logger:add{['average score'] = total_score}	
+	--logger:add{['highest score'] = highest_score}
+	logger:style{['average score'] = '-'}
+	--logger:style{['highest score'] = '-'}
+	logger:plot()
     print(highest_grid)
     end
 
