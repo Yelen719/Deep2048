@@ -6,6 +6,8 @@ local two048Lua = {}
 
 two048Lua.oldScore = 0;
 two048Lua.score = 0;
+two048Lua.stateValue = 0;
+two048Lua.oldStateValue = 0;
 two048Lua.highestTile = 0;
 two048Lua.grid = {};
 two048Lua.actions = {"u", "d", "l", "r"};
@@ -18,6 +20,21 @@ function two048Lua.getScore()
     return two048Lua.score;
 end
 
+function two048Lua.updateStateValue()
+    local stateValue = 0;
+    stateValue = stateValue + 2 * two048Lua.grid[4][4] + 0.8 * ( two048Lua.grid[3][4] + two048Lua.grid[4][3] ) + 0.6 * (two048Lua.grid[2][4] + two048Lua.grid[4][2]) + 0.4 * (two048Lua.grid[4][1] + two048Lua.grid[1][4])
+    local zeroPos = 0;
+    for i = 1, 4 do
+        for j = 1, 4 do
+            if two048Lua.grid[i][j] == 0 then
+                zeroPos = zeroPos + 1;
+            end
+        end
+    end
+    stateValue = 1.1^zeroPos * stateValue
+    two048Lua.stateValue = stateValue 
+end
+
 function two048Lua.getGrid()
     return two048Lua.grid;
 end
@@ -28,9 +45,11 @@ end
 
 function two048Lua.getState()
     local screen = two048Lua.getGrid();
-    local reward = two048Lua.score - two048Lua.oldScore;
+    local reward = two048Lua.score - two048Lua.oldScore + two048Lua.stateValue - two048Lua.oldStateValue;
     local terminal = two048Lua.isOver();
-    return torch.Tensor(screen), reward, terminal;
+    local score = two048Lua.score - two048Lua.oldScore
+    --local reward = score
+    return torch.Tensor(screen), reward, terminal, score;
 end
 
 function two048Lua.initGrid(m,n)
@@ -48,6 +67,7 @@ function two048Lua.initGrid(m,n)
     end
     two048Lua.randomNum(two048Lua.grid);
     two048Lua.randomNum(two048Lua.grid);
+    two048Lua.updateStateValue(); 
 end
 
 function two048Lua.printGrid()
@@ -106,6 +126,14 @@ function two048Lua.getRandomZeroPos()
         math.randomseed(os.time());
         local r = torch.random(1,#zeros)
         return zeros[r].i,zeros[r].j
+    end
+end
+
+function two048Lua.nextRandomGame()
+    two048Lua.restart();
+    for i = 1,30 do 
+        math.randomseed(os.time());
+        two048Lua.move(two048Lua.actions[torch.random(1,#two048Lua.actions)]);
     end
 end
 
@@ -350,6 +378,8 @@ function two048Lua.silentRestart()
 end
 
 function two048Lua.move(action)
+    two048Lua.updateStateValue();
+    two048Lua.oldStateValue = two048Lua.stateValue;
     two048Lua.oldScore = two048Lua.score;
     if action == "u" then
         two048Lua.moveUp();
@@ -360,6 +390,7 @@ function two048Lua.move(action)
     elseif action == "r" then
         two048Lua.moveRight();
     end
+    two048Lua.updateStateValue();
 end
 
 function two048Lua.step(action)
@@ -403,3 +434,4 @@ function two048Lua.run()
 end
 
 return two048Lua
+

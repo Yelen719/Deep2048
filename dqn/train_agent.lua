@@ -78,12 +78,14 @@ local step = 0
 time_history[1] = 0
 
 local total_reward
+local total_score
 local nrewards
 local nepisodes
 local episode_reward
+local episode_score
 
 game_env.initGrid();
-local screen, reward, terminal = game_env.getState()
+local screen, reward, terminal, score = game_env.getState()
 
 print("Iteration ..", step)
 local win = nil
@@ -96,16 +98,15 @@ while step < opt.steps do
     if not terminal then
         -- screen, reward, terminal = game_env.step(game_actions[action_index], true)
         -- print(game_actions[action_index]);
-        screen, reward, terminal = game_env.step(game_actions[action_index])
+        screen, reward, terminal, score = game_env.step(game_actions[action_index])
         -- print(reward);
     else
         if opt.random_starts > 0 then
-            -- screen, reward, terminal = game_env:nextRandomGame()
-            game_env.restart();
-            screen, reward, terminal = game_env.getState();
+            game_env.nextRandomGame()
+            screen, reward, terminal, score = game_env.getState();
         else
             game_env.restart();
-            screen, reward, terminal = game_env.getState();
+            screen, reward, terminal, score = game_env.getState();
         end
     end
 
@@ -125,37 +126,45 @@ while step < opt.steps do
     if step % opt.eval_freq == 0 and step > learn_start then
 
         game_env.restart();
-        screen, reward, terminal = game_env.getState();
+        screen, reward, terminal, score= game_env.getState();
         total_reward = 0
+        total_score = 0
         nrewards = 0
         nepisodes = 0
         episode_reward = 0
+        episode_score = 0;
         highest_reward = 0;
+        highest_score = 0;
         local eval_time = sys.clock()
         for estep=1,opt.eval_steps do
             -- 0.05 is used for egreedy
             local action_index = agent:perceive(reward, screen, terminal, true, 0.05)
             -- Play game in test mode (episodes don't end when losing a life)
-            screen, reward, terminal = game_env.step(game_actions[action_index])
+            screen, reward, terminal, score = game_env.step(game_actions[action_index])
             -- display screen
             -- win = image.display({image=screen, win=win})
             if estep%1000 == 0 then collectgarbage() end
             -- record every reward
             episode_reward = episode_reward + reward
-            if reward ~= 0 then
+            episode_score = episode_score + score;
+            if reward > 0 then
                nrewards = nrewards + 1
+            elseif reward < 0 then
+               nrewards = nrewards - 1
             end
 
             if terminal then
                 total_reward = total_reward + episode_reward
-                if episode_reward > highest_reward then
-                    highest_reward = episode_reward;
+                total_score = total_score + episode_score;
+                if episode_score > highest_score then
+                    highest_score = episode_score;
+            highest_grid = screen;
                 end
                 episode_reward = 0
+                episode_score = 0
                 nepisodes = nepisodes + 1
-                --screen, reward, terminal = game_env:nextRandomGame()
-                game_env.restart();
-                screen, reward, terminal = game_env.getState();
+                screen, reward, terminal, score = game_env.nextRandomGame()
+                screen, reward, terminal, score = game_env.getState();
             end
         end
 
@@ -164,6 +173,7 @@ while step < opt.steps do
         agent:compute_validation_statistics()
         local ind = #reward_history+1
         total_reward = total_reward/math.max(1, nepisodes)
+        total_score = total_score/math.max(1, nepisodes)
 
         if #reward_history == 0 or total_reward > torch.Tensor(reward_history):max() then
             agent.best_network = agent.network:clone()
@@ -187,12 +197,13 @@ while step < opt.steps do
         local training_rate = opt.actrep*opt.eval_freq/time_dif
 
         print(string.format(
-            '\nSteps: %d (frames: %d), reward: %.2f, higheset reward: %d, epsilon: %.2f, lr: %G, ' ..
+            '\nSteps: %d (frames: %d), score: %.2f, higheset score: %d, epsilon: %.2f, lr: %G, ' ..
             'training time: %ds, training rate: %dfps, testing time: %ds, ' ..
             'testing rate: %dfps,  num. ep.: %d,  num. rewards: %d',
-            step, step*opt.actrep, total_reward, highest_reward, agent.ep, agent.lr, time_dif,
+            step, step*opt.actrep, total_score, highest_score, agent.ep, agent.lr, time_dif,
             training_rate, eval_time, opt.actrep*opt.eval_steps/eval_time,
             nepisodes, nrewards))
+    print(highest_grid)
     end
 
     if step % opt.save_freq == 0 or step == opt.steps then
@@ -221,7 +232,6 @@ while step < opt.steps do
                                 td_history = td_history,
                                 qmax_history = qmax_history,
                                 arguments=opt})
-		]]
         if opt.saveNetworkParams then
             local nets = {network=w:clone():float()}
             torch.save(filename..'.params.t7', nets, 'ascii')

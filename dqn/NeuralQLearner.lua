@@ -7,6 +7,8 @@ if not dqn then
     require 'initenv'
 end
 
+local DuelAggregator = require 'DuelAggregator'
+
 local nql = torch.class('dqn.NeuralQLearner')
 
 
@@ -61,10 +63,10 @@ function nql:__init(args)
 
     self.transition_params = args.transition_params or {}
 
-    self.network    = args.network or self:createNetwork()
-    -- self.network    = self:createNetwork()
+    -- self.network    = args.network or self:createNetwork()
+    self.network    = self:createNetwork()
 
-    check whether there is a network file
+    --[[ -- check whether there is a network file
     local network_function
     if not (type(self.network) == 'string') then
         error("The type of the network provided in NeuralQLearner" ..
@@ -88,6 +90,7 @@ function nql:__init(args)
        self.network = err
        self.network = self:network()
     end
+    --]]	
 	
 	print(self.network)
 
@@ -306,7 +309,8 @@ function nql:perceive(reward, rawstate, terminal, testing, testing_ep)
     local curState
 
     if self.max_reward then
-        reward = math.min(reward, self.max_reward)
+       reward = math.min(reward, self.max_reward)
+	   print("dfsafa");
     end
     if self.min_reward then
         reward = math.max(reward, self.min_reward)
@@ -423,7 +427,31 @@ function nql:createNetwork()
     mlp:add(nn.Rectifier())
     mlp:add(nn.Linear(n_hid, n_hid * 2))
     mlp:add(nn.Rectifier())
-    mlp:add(nn.Linear(n_hid * 2, self.n_actions))
+	mlp:add(nn.Linear(n_hid * 2, n_hid * 4))
+	mlp:add(nn.Rectifier())
+    local valStream = nn.Sequential()
+    valStream:add(nn.Linear(n_hid * 4, n_hid * 8))
+    valStream:add(nn.Rectifier())
+    valStream:add(nn.Linear(n_hid * 8, 1)) -- Predicts value for state
+
+    -- Advantage approximator A^(s, a)
+    local advStream = nn.Sequential()
+    advStream:add(nn.Linear(n_hid * 4, n_hid * 8))
+    advStream:add(nn.Rectifier())
+    advStream:add(nn.Linear(n_hid * 8, 4)) -- Predicts action-conditional advantage
+
+    -- Streams container
+    local streams = nn.ConcatTable()
+    streams:add(valStream)
+    streams:add(advStream)
+
+    -- Add dueling streams
+    mlp:add(streams)
+    -- Add dueling streams aggregator module
+    mlp:add(DuelAggregator(4))
+ --    mlp:add(nn.Linear(n_hid * 4, n_hid * 8))
+	-- mlp:add(nn.Rectifier())
+ --    mlp:add(nn.Linear(n_hid * 8, self.n_actions))
 
     return mlp
 end

@@ -16,17 +16,18 @@ FRAMEWORK="./two048Lua.lua"
 #num_threads
 #gpu
 #random seed
-num_threads=8
+num_threads=4
 gpu=0
 seed=1
 
 env_params="useRGB=true"
 agent="NeuralQLearner"
 n_replay=1
-netfile="\"convnet_atari3\""
+#netfile="\"convnet_atari3\""
+netfile=false
 update_freq=4
 actrep=4
-discount=0.7
+discount=0.9
 learn_start=50000
 pool_frms_type="\"max\""
 pool_frms_size=2
@@ -41,7 +42,7 @@ agent_name=$agent_type"_"$1"_FULL_Y"
 # Nan Yang
 state_dim=16
 ncols=1
-agent_params="lr="$lr",ep=1,ep_end="$eps_end",ep_endt="$eps_endt",discount="$discount",hist_len=4,learn_start="$learn_start",replay_memory="$replay_memory",update_freq="$update_freq",n_replay="$n_replay",network="$netfile",preproc="$preproc_net",state_dim="$state_dim",minibatch_size=32,rescale_r=1,ncols="$ncols",bufferSize=512,valid_size=500,target_q=10000,clip_delta=1,min_reward=-1,max_reward=1"
+agent_params="lr="$lr",ep=1,ep_end="$eps_end",ep_endt="$eps_endt",discount="$discount",hist_len=4,learn_start="$learn_start",replay_memory="$replay_memory",update_freq="$update_freq",n_replay="$n_replay",network="$netfile",preproc="$preproc_net",state_dim="$state_dim",minibatch_size=32,rescale_r=1,ncols="$ncols",bufferSize=512,valid_size=500,target_q=10000,clip_delta=1,min_reward=false,max_reward=false"
 steps=50000000
 eval_freq=250000
 eval_steps=125000
